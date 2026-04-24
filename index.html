@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Variety &mdash; Launching Soon</title>
+  <meta name="description" content="Neural AI that decodes how every pixel, word, and sound moves the brain." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-maroon:      oklch(0.24 0.06 20);
+      --bg-maroon-deep: oklch(0.18 0.05 18);
+      --bg-navy:        oklch(0.22 0.04 255);
+      --bg-navy-deep:   oklch(0.16 0.035 258);
+      --ink-cream:      oklch(0.92 0.03 75);
+      --ink-muted:      oklch(0.68 0.04 60);
+      --copper:         oklch(0.68 0.11 48);
+      --copper-light:   oklch(0.78 0.095 52);
+      --copper-glow:    oklch(0.72 0.12 45);
+      --line-warm:      oklch(0.58 0.08 45 / 0.28);
+
+      --radius-pill: 999px;
+      --radius-card: 18px;
+
+      --t-fast: 180ms cubic-bezier(0.22, 1, 0.36, 1);
+      --t-std:  340ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { min-height: 100vh; }
+    body {
+      font-family: 'Spectral', Georgia, serif;
+      color: var(--ink-cream);
+      background: var(--bg-maroon-deep);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      line-height: 1.55;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; border: none; cursor: pointer; color: inherit; background: none; }
+
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      background:
+        radial-gradient(ellipse 85% 55% at 50% 18%, oklch(0.32 0.08 22) 0%, transparent 62%),
+        radial-gradient(ellipse 70% 50% at 20% 100%, var(--bg-navy) 0%, transparent 58%),
+        radial-gradient(ellipse 75% 55% at 95% 90%, var(--bg-navy-deep) 0%, transparent 55%),
+        linear-gradient(180deg, var(--bg-maroon) 0%, oklch(0.2 0.05 30) 48%, var(--bg-navy-deep) 100%);
+    }
+
+    /* 3D voxel scene layer */
+    .hero-scene {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: auto;
+      mix-blend-mode: normal;
+    }
+    .hero-scene #root {
+      width: 100%;
+      height: 100%;
+    }
+    .hero-scene canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+      background: transparent !important;
+    }
+
+    /* Tint overlay keeps brand palette — behind content so content reads */
+    .tint {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 80% 55% at 50% 20%, oklch(0.24 0.06 22 / 0.25) 0%, transparent 70%),
+        linear-gradient(180deg, oklch(0.18 0.05 18 / 0.1) 0%, oklch(0.16 0.035 258 / 0.28) 100%);
+    }
+    .tint::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1  0 0 0 0 0.08  0 0 0 0 0.07  0 0 0 0.38 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+      opacity: 0.45;
+      mix-blend-mode: overlay;
+      pointer-events: none;
+    }
+
+    .rings {
+      position: absolute;
+      top: 8%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(1100px, 92vw);
+      aspect-ratio: 1 / 1;
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0.35;
+    }
+    .rings::before, .rings::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 1px solid var(--line-warm);
+    }
+    .rings::after {
+      inset: 12%;
+      border-color: oklch(0.55 0.07 40 / 0.2);
+    }
+
+    .shell {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px clamp(32px, 4vw, 56px) 72px clamp(12px, 2vw, 28px);
+      position: relative;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .shell nav, .shell .capture, .shell .card, .shell .socials a, .shell .nav-cta, .shell .btn-copper, .shell .nav-links a {
+      pointer-events: auto;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 14px 22px;
+      border-radius: var(--radius-pill);
+      background: oklch(0.14 0.025 25 / 0.55);
+      backdrop-filter: blur(16px) saturate(120%);
+      -webkit-backdrop-filter: blur(16px) saturate(120%);
+      border: 1px solid oklch(0.55 0.06 45 / 0.14);
+      box-shadow:
+        inset 0 1px 0 oklch(0.9 0.04 60 / 0.04),
+        0 12px 32px oklch(0 0 0 / 0.35);
+    }
+    .logo {
+      font-family: 'Italiana', serif;
+      font-size: 22px;
+      letter-spacing: 2.5px;
+      color: var(--ink-cream);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .logo-mark {
+      color: var(--copper-light);
+      font-size: 14px;
+      transform: translateY(-6px);
+    }
+    .nav-links {
+      display: flex;
+      gap: 40px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: 'Spectral', serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 2.2px;
+      text-transform: uppercase;
+      color: oklch(0.78 0.02 50 / 0.72);
+      transition: color var(--t-fast);
+    }
+    .nav-links a:hover { color: var(--ink-cream); }
+    .nav-cta {
+      padding: 10px 22px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 2.4px;
+      text-transform: uppercase;
+      color: var(--copper-light);
+      background: oklch(0.2 0.03 30 / 0.6);
+      border: 1px solid oklch(0.58 0.08 45 / 0.35);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: background var(--t-fast), border-color var(--t-fast);
+    }
+    .nav-cta::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--copper);
+      box-shadow: 0 0 10px var(--copper-glow);
+    }
+    .nav-cta:hover {
+      background: oklch(0.25 0.04 35 / 0.7);
+      border-color: oklch(0.62 0.09 45 / 0.55);
+    }
+
+    .hero {
+      padding: clamp(80px, 14vh, 150px) 0 60px;
+      text-align: left;
+      position: relative;
+      perspective: 900px;
+      transform-style: preserve-3d;
+      max-width: 640px;
+    }
+    .eyebrow {
+      font-family: 'Italiana', serif;
+      display: block;
+      font-size: 38px;
+      color: var(--copper-light);
+      margin-bottom: 28px;
+      text-shadow: 0 0 28px oklch(0.72 0.12 45 / 0.4);
+    }
+    h1.display {
+      font-family: 'Italiana', serif;
+      font-weight: 500;
+      font-size: clamp(52px, 7.2vw, 108px);
+      line-height: 1.02;
+      letter-spacing: -1.2px;
+      color: oklch(0.94 0.02 70);
+      margin-bottom: 28px;
+      -webkit-text-stroke: 0.9px currentColor;
+      text-shadow:
+        0 0 1px currentColor,
+        0 0 22px oklch(0.3 0.08 22 / 0.55),
+        0 2px 30px oklch(0 0 0 / 0.6);
+      font-synthesis: weight;
+      transform: translateZ(-200px);
+      transform-style: preserve-3d;
+    }
+    .rule {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 14px;
+      margin: 18px 0 22px;
+      color: var(--copper);
+    }
+    .rule hr {
+      width: 80px;
+      height: 1px;
+      border: 0;
+      background: oklch(0.62 0.08 45 / 0.45);
+    }
+    .lede {
+      max-width: 520px;
+      margin: 0;
+      font-size: 17px;
+      font-weight: 300;
+      color: oklch(0.82 0.02 55);
+      font-style: italic;
+    }
+    .lede em {
+      font-style: italic;
+      color: var(--copper-light);
+      font-weight: 400;
+    }
+
+    .capture {
+      margin: 42px 0 0;
+      max-width: 540px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px;
+      border-radius: var(--radius-pill);
+      background: oklch(0.12 0.02 25 / 0.55);
+      backdrop-filter: blur(18px) saturate(130%);
+      -webkit-backdrop-filter: blur(18px) saturate(130%);
+      border: 1px solid oklch(0.5 0.05 45 / 0.18);
+      box-shadow:
+        inset 0 1px 0 oklch(0.9 0.04 60 / 0.05),
+        0 16px 40px oklch(0 0 0 / 0.35);
+    }
+    .capture input {
+      flex: 1;
+      padding: 14px 22px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--ink-cream);
+      font-family: 'Spectral', serif;
+      font-size: 15px;
+      font-style: italic;
+      font-weight: 300;
+    }
+    .capture input::placeholder {
+      color: oklch(0.6 0.02 50 / 0.7);
+      font-style: italic;
+    }
+
+    .btn-copper {
+      position: relative;
+      padding: 14px 28px;
+      border-radius: var(--radius-pill);
+      font-family: 'Spectral', serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 2.4px;
+      text-transform: uppercase;
+      color: oklch(0.15 0.03 25);
+      background:
+        linear-gradient(180deg,
+          oklch(0.82 0.1 55) 0%,
+          oklch(0.72 0.11 48) 40%,
+          oklch(0.58 0.11 40) 100%);
+      box-shadow:
+        inset 0 1px 0 oklch(0.92 0.06 70 / 0.7),
+        inset 0 -1px 0 oklch(0.35 0.07 35 / 0.7),
+        0 6px 14px oklch(0.3 0.08 35 / 0.45),
+        0 2px 4px oklch(0 0 0 / 0.3);
+      transition: transform var(--t-fast), box-shadow var(--t-fast), filter var(--t-fast);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
+    }
+    .btn-copper:hover { filter: brightness(1.06); transform: translateY(-1px); }
+    .btn-copper:active {
+      transform: translateY(1px);
+      box-shadow:
+        inset 0 2px 4px oklch(0.3 0.07 35 / 0.6),
+        inset 0 -1px 0 oklch(0.85 0.06 60 / 0.25),
+        0 1px 2px oklch(0 0 0 / 0.35);
+    }
+    .btn-copper .arrow { transition: transform var(--t-fast); }
+    .btn-copper:hover .arrow { transform: translateX(3px); }
+
+    .features {
+      margin-top: clamp(72px, 10vh, 110px);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .card {
+      padding: 26px 26px 28px;
+      border-radius: var(--radius-card);
+      background: oklch(0.13 0.025 245 / 0.55);
+      backdrop-filter: blur(14px) saturate(125%);
+      -webkit-backdrop-filter: blur(14px) saturate(125%);
+      border: 1px solid oklch(0.48 0.04 250 / 0.18);
+      box-shadow:
+        inset 0 1px 0 oklch(0.9 0.04 60 / 0.04),
+        0 14px 36px oklch(0 0 0 / 0.28);
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+      transition: transform var(--t-std), border-color var(--t-std);
+    }
+    .card:hover { transform: translateY(-3px); border-color: oklch(0.6 0.08 45 / 0.3); }
+    .card-icon {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: oklch(0.1 0.02 25 / 0.75);
+      border: 1px solid oklch(0.58 0.08 45 / 0.3);
+      color: var(--copper-light);
+      box-shadow: inset 0 1px 0 oklch(0.9 0.04 60 / 0.06);
+    }
+    .card-icon svg { width: 20px; height: 20px; }
+    .card h3 {
+      font-family: 'Spectral', serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2.4px;
+      text-transform: uppercase;
+      color: var(--ink-cream);
+      margin-bottom: 8px;
+    }
+    .card p {
+      font-size: 13.5px;
+      line-height: 1.6;
+      font-weight: 300;
+      color: oklch(0.72 0.02 55);
+    }
+    .card .underline {
+      display: block;
+      width: 28px;
+      height: 1px;
+      margin-top: 12px;
+      background: var(--copper);
+    }
+
+    /* Footer — 25% smaller, hides on scroll up */
+    footer {
+      margin-top: clamp(54px, 7.5vh, 82px);
+      text-align: center;
+      transition: opacity 0.35s var(--t-fast), transform 0.35s var(--t-fast);
+      will-change: opacity, transform;
+    }
+    footer.hidden {
+      opacity: 0;
+      transform: translateY(16px);
+      pointer-events: none;
+    }
+    .footer-spark {
+      display: block;
+      font-family: 'Italiana', serif;
+      color: var(--copper);
+      font-size: 16.5px;
+      margin-bottom: 10px;
+    }
+    .footer-tag {
+      font-family: 'Spectral', serif;
+      font-size: 8.25px;
+      font-weight: 500;
+      letter-spacing: 2.25px;
+      text-transform: uppercase;
+      color: var(--copper-light);
+      margin-bottom: 21px;
+    }
+    .socials { display: inline-flex; gap: 10.5px; }
+    .socials a {
+      width: 28.5px;
+      height: 28.5px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      border: 1px solid oklch(0.55 0.03 50 / 0.28);
+      color: oklch(0.7 0.02 55);
+      transition: color var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+      background: oklch(0.12 0.02 25 / 0.4);
+      backdrop-filter: blur(8px);
+    }
+    .socials a:hover {
+      color: var(--copper-light);
+      border-color: oklch(0.6 0.08 45 / 0.5);
+      transform: translateY(-2px);
+    }
+    .socials svg { width: 11.25px; height: 11.25px; }
+
+    /* Variation bar — season morph buttons (vertical, right lower corner) */
+    #variation-bar {
+      position: fixed;
+      bottom: 32px;
+      right: 28px;
+      z-index: 20;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+      padding: 8px;
+      border-radius: 22px;
+      background: oklch(0.12 0.02 25 / 0.55);
+      backdrop-filter: blur(18px) saturate(130%);
+      -webkit-backdrop-filter: blur(18px) saturate(130%);
+      border: 1px solid oklch(0.55 0.06 45 / 0.18);
+      box-shadow:
+        inset 0 1px 0 oklch(0.9 0.04 60 / 0.05),
+        0 14px 36px oklch(0 0 0 / 0.35);
+      pointer-events: auto;
+    }
+    #variation-bar .morph-btn {
+      font-family: 'Italiana', serif;
+      font-size: 14px;
+      letter-spacing: 0.4px;
+      padding: 9px 18px;
+      border-radius: var(--radius-pill);
+      color: oklch(0.78 0.02 50 / 0.7);
+      background: transparent;
+      transition: color var(--t-fast), background var(--t-fast);
+      white-space: nowrap;
+      text-align: center;
+    }
+    #variation-bar .morph-btn:hover { color: var(--ink-cream); }
+    #variation-bar .morph-btn.active {
+      color: oklch(0.15 0.03 25);
+      background: linear-gradient(180deg,
+        oklch(0.82 0.1 55) 0%,
+        oklch(0.72 0.11 48) 40%,
+        oklch(0.58 0.11 40) 100%);
+      box-shadow:
+        inset 0 1px 0 oklch(0.92 0.06 70 / 0.6),
+        inset 0 -1px 0 oklch(0.35 0.07 35 / 0.55),
+        0 3px 8px oklch(0.3 0.08 35 / 0.4);
+    }
+
+    @media (max-width: 780px) {
+      .nav-links { display: none; }
+      .features { grid-template-columns: 1fr; }
+      .capture { flex-direction: column; padding: 10px; border-radius: 20px; }
+      .capture input { width: 100%; text-align: center; }
+      .btn-copper { width: 100%; justify-content: center; }
+      h1.display { letter-spacing: -1px; }
+      .nav { padding: 12px 14px; }
+      .logo { font-size: 18px; letter-spacing: 2px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+
+    .fade-up { opacity: 0; transform: translateY(14px); animation: fadeUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    .d1 { animation-delay: 0.1s; }
+    .d2 { animation-delay: 0.22s; }
+    .d3 { animation-delay: 0.34s; }
+    .d4 { animation-delay: 0.46s; }
+    .d5 { animation-delay: 0.58s; }
+    .d6 { animation-delay: 0.7s; }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <div class="backdrop" aria-hidden="true"></div>
+  <div class="hero-scene" aria-hidden="true"><div id="root"></div></div>
+  <div class="tint" aria-hidden="true"></div>
+  <div class="rings" aria-hidden="true"></div>
+
+  <div id="variation-bar" role="tablist" aria-label="Season variation">
+    <button class="morph-btn active" data-variation="0" role="tab">Autumn Maple</button>
+    <button class="morph-btn" data-variation="1" role="tab">Snowy Pine</button>
+    <button class="morph-btn" data-variation="2" role="tab">Cherry Blossom</button>
+  </div>
+
+  <div class="shell">
+    <nav class="nav fade-up d1" aria-label="Primary">
+      <a href="#" class="logo" aria-label="Variety home">
+        <span class="logo-mark">&#x2726;</span>
+        VARIETY
+      </a>
+      <ul class="nav-links">
+        <li><a href="#research">Research</a></li>
+        <li><a href="#vision">Vision</a></li>
+        <li><a href="#updates">Updates</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+      <button class="nav-cta" type="button">Stay Informed</button>
+    </nav>
+
+    <section class="hero">
+      <span class="eyebrow fade-up d2" aria-hidden="true">&#x2726;</span>
+      <h1 class="display fade-up d2">Launching Soon</h1>
+      <div class="rule fade-up d3" aria-hidden="true">
+        <hr /><span style="font-family:'Italiana',serif;">&#x2726;</span><hr />
+      </div>
+      <p class="lede fade-up d3">
+        Neural AI trained on the human brain. It sees <em>which word, sound, frame</em> moves
+        which region &mdash; and which hormone follows.
+      </p>
+
+      <form class="capture fade-up d4" id="notify" novalidate>
+        <input type="email" id="email" name="email" required autocomplete="email"
+               placeholder="Enter your email address" aria-label="Email address" />
+        <button class="btn-copper" type="submit" aria-label="Notify me when Variety launches">
+          <span class="arrow" aria-hidden="true">&rarr;</span>
+          Notify Me
+        </button>
+      </form>
+    </section>
+
+    <section class="features" aria-label="What Variety does">
+      <article class="card fade-up d5">
+        <span class="card-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </span>
+        <div>
+          <h3>Neural A/B</h3>
+          <p>Test variants against real brain response, not clicks. See attention, emotion, intent.</p>
+          <span class="underline" aria-hidden="true"></span>
+        </div>
+      </article>
+
+      <article class="card fade-up d6">
+        <span class="card-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l1.8 4.5 4.5 1.8-4.5 1.8L12 14.6l-1.8-4.5L5.7 8.3l4.5-1.8L12 2z"/>
+          </svg>
+        </span>
+        <div>
+          <h3>Hormonal Map</h3>
+          <p>Dopamine, oxytocin, cortisol &mdash; trace the chemical signature of every component you ship.</p>
+          <span class="underline" aria-hidden="true"></span>
+        </div>
+      </article>
+
+      <article class="card fade-up d6">
+        <span class="card-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="10" width="14" height="10" rx="2"/>
+            <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+          </svg>
+        </span>
+        <div>
+          <h3>Founding Access</h3>
+          <p>A small cohort of researchers and product teams shape the first release. Join the list.</p>
+          <span class="underline" aria-hidden="true"></span>
+        </div>
+      </article>
+    </section>
+
+    <footer>
+      <span class="footer-spark" aria-hidden="true">&#x2726;</span>
+      <p class="footer-tag">Something remarkable is coming</p>
+      <div class="socials" aria-label="Social links">
+        <a href="#" aria-label="Instagram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="5"/>
+            <circle cx="12" cy="12" r="4"/>
+            <circle cx="17.5" cy="6.5" r="0.6" fill="currentColor"/>
+          </svg>
+        </a>
+        <a href="#" aria-label="X (Twitter)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4l16 16M20 4L4 20"/>
+          </svg>
+        </a>
+        <a href="mailto:hello@variety.ai" aria-label="Email">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="18" height="14" rx="2"/>
+            <path d="M3 7l9 6 9-6"/>
+          </svg>
+        </a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const form = document.getElementById('notify');
+    const email = document.getElementById('email');
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = email.value.trim();
+      const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+      if (!valid) {
+        email.style.outline = '1px solid oklch(0.65 0.15 25)';
+        email.focus();
+        return;
+      }
+      email.style.outline = 'none';
+      const btn = form.querySelector('.btn-copper');
+      btn.innerHTML = '<span aria-hidden="true">&check;</span> Added';
+      btn.disabled = true;
+      email.value = '';
+    });
+
+    // Footer: hide on scroll up, show at bottom
+    const footerEl = document.querySelector('footer');
+    let lastY = window.scrollY;
+    let ticking = false;
+    function onScroll() {
+      const y = window.scrollY;
+      const atBottom = (window.innerHeight + y) >= (document.body.scrollHeight - 80);
+      const scrollingUp = y < lastY - 2;
+      if (atBottom) {
+        footerEl.classList.remove('hidden');
+      } else if (scrollingUp) {
+        footerEl.classList.add('hidden');
+      }
+      lastY = y;
+      ticking = false;
+    }
+    window.addEventListener('scroll', () => {
+      if (!ticking) { requestAnimationFrame(onScroll); ticking = true; }
+    }, { passive: true });
+  </script>
+  <script type="module" src="/scene.js"></script>
+</body>
+</html>
